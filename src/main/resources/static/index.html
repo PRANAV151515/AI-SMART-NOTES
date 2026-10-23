@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI Smart Notes</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 40px auto; }
+    input, textarea { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; }
+    button { padding: 8px 12px; margin-right: 5px; cursor: pointer; }
+    .note { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 8px; }
+    .summary { background: #eef; padding: 6px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>📝 AI Smart Notes</h1>
+  <input id="title" placeholder="Title">
+  <textarea id="content" rows="4" placeholder="Note likho..."></textarea>
+  <button onclick="addNote()">Add Note</button>
+  <div id="notes"></div>
+
+  <script>
+    const API = "/api/notes";
+
+    async function loadNotes() {
+      const res = await fetch(API);
+      const notes = await res.json();
+      const div = document.getElementById("notes");
+      div.innerHTML = "";
+      notes.forEach(n => {
+        div.innerHTML += `
+          <div class="note">
+            <b>${n.title}</b>
+            <p>${n.content}</p>
+            ${n.summary ? `<div class="summary">✨ ${n.summary}</div>` : ""}
+            <button onclick="summarize(${n.id})">✨ AI Summarize</button>
+            <button onclick="del(${n.id})">🗑 Delete</button>
+          </div>`;
+      });
+    }
+
+    async function addNote() {
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+      await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content })
+      });
+      document.getElementById("title").value = "";
+      document.getElementById("content").value = "";
+      loadNotes();
+    }
+
+    async function summarize(id) {
+      await fetch(`${API}/${id}/summarize`, { method: "POST" });
+      loadNotes();
+    }
+
+    async function del(id) {
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      loadNotes();
+    }
+
+    loadNotes();
+  </script>
+</body>
+</html>
